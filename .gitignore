@@ -1,0 +1,23 @@
+# Python bytecode files and directories
+# Ignores all __pycache__ folders and their contents, wherever they appear
+__pycache__/
+
+# Database and runtime data files
+# Ignores the specific SQLite database file
+run_data.db
+# Ignores temporary/test-specific files
+test.py
+# Ignores the serial logging file
+serial.txt
+
+# Virtual Environments
+# Ignores all .venv folders (for virtual environments like venv)
+.venv/
+# Ignores virtual environments that might be named 'env', 'venv', etc. if placed elsewhere
+env/
+venv/
+*.egg-info/
+
+# Environment Configuration Files
+# Ignores files that contain sensitive environment variables
+.env
