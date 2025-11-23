@@ -9,6 +9,8 @@ run_data.db
 test.py
 # Ignores the serial logging file
 serial.txt
+# Ignores the config file
+config.py
 
 # Virtual Environments
 # Ignores all .venv folders (for virtual environments like venv)
