@@ -1,5 +1,5 @@
 # Hoppie's ACARS logon details
-LOGON_CODE = "MeTZhbSAShZ4GUuYz"
+LOGON_CODE = ""
 CALLSIGN = "TESTOPS"
 
 # Configure how many minutes before arrival should the arrival messages be automatically sent
