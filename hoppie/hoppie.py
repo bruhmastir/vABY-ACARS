@@ -1,10 +1,11 @@
 import requests
 from requests.exceptions import RequestException
 from config import LOGON_CODE, CALLSIGN, HTTP_TIMEOUT
+from database.db_commit import insert_message_sent
 
 BASE_URL = "http://www.hoppie.nl/acars/system"
 
-def send_message(to, msg_type, text):
+def send_message(to, msg_type, text, flight_id: str = ""):
     """Send a message via Hoppie ACARS."""
     params = {
         "logon": LOGON_CODE,
@@ -15,6 +16,7 @@ def send_message(to, msg_type, text):
     }
     try:
         r = requests.get(f"{BASE_URL}/connect.html", params=params, timeout=HTTP_TIMEOUT)
+        insert_message_sent(flight_id, to, "cpdlc", text)
         return True, r.text
     except RequestException as e:
         return False, f"Send failed: {e}"

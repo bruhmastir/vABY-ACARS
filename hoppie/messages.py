@@ -1,3 +1,4 @@
+from vamsys.flights import get_flight_from_callsign
 from .hoppie import send_message
 from utils.serial import next_serial
 from utils.stands import find_company_stands
@@ -13,4 +14,8 @@ def send_arrival_info(callsign, arrival_airport, eta):
         f"ETA: @{eta}@"
     )
 
-    print(send_message(callsign, "cpdlc", msg))
+    flight_id = get_flight_from_callsign(callsign)["flight_id"]
+    print(send_message(callsign, "cpdlc", msg, flight_id))
+
+    
+    return msg

@@ -10,7 +10,7 @@ def db_init(db_name='atc_data.db'):
     # Table 1: messages_sent
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages_sent (
-            MIN INTEGER PRIMARY KEY,
+            MIN INTEGER PRIMARY KEY AUTOINCREMENT,
             FLIGHT_ID TEXT NOT NULL,
             CALLSIGN TEXT NOT NULL,
             TYPE TEXT NOT NULL,

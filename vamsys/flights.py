@@ -21,3 +21,5 @@ def get_flight_from_id(flight_id: str):
     flight_data = {"callsign": callsign, "origin": origin, "dest": dest, "time_rem": time_rem, "pilot_id": pilot_id}
 
     return flight_data
+
+# def 

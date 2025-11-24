@@ -12,20 +12,20 @@ def connect_db(db_name=DB_NAME):
 
 # --- C: CREATE (INSERT) Operations ---
 
-def insert_message_sent(min_id, flight_id, callsign, msg_type, message):
+def insert_message_sent(flight_id, callsign, msg_type, message):
     """Inserts a new message into the messages_sent table."""
     try:
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO messages_sent (MIN, FLIGHT_ID, CALLSIGN, TYPE, MESSAGE)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO messages_sent (FLIGHT_ID, CALLSIGN, TYPE, MESSAGE)
+            VALUES (?, ?, ?, ?)
             """,
-            (min_id, flight_id, callsign, msg_type, message)
+            (flight_id, callsign, msg_type, message)
         )
         conn.commit()
-        return f"Successfully inserted MIN {min_id} into messages_sent."
+        return f"Successfully inserted the message into messages_sent."
     except sqlite3.IntegrityError as e:
         return f"Error inserting message sent (Integrity Error): {e}"
     except sqlite3.Error as e:
@@ -85,8 +85,8 @@ def assign_stand(flight_id, callsign, airport, stand, min_id):
 
 # --- R: READ (SELECT) Operations ---
 
-def get_messages_by_callsign(callsign):
-    """Retrieves all sent and received messages for a specific callsign."""
+def get_messages_by_flight(flight_id):
+    """Retrieves all sent and received messages for a specific flight."""
     try:
         conn = connect_db()
         conn.row_factory = sqlite3.Row  # Allows accessing columns by name
@@ -94,15 +94,15 @@ def get_messages_by_callsign(callsign):
 
         # Get sent messages
         cursor.execute(
-            "SELECT MIN, FLIGHT_ID, TYPE, MESSAGE FROM messages_sent WHERE CALLSIGN = ?",
-            (callsign,)
+            "SELECT MIN, FLIGHT_ID, TYPE, MESSAGE FROM messages_sent WHERE FLIGHT_ID = ?",
+            (flight_id,)
         )
         sent_msgs = [dict(row) for row in cursor.fetchall()]
 
         # Get received messages
         cursor.execute(
-            "SELECT ID, MIN, MRN, TYPE, MESSAGE FROM messages_received WHERE CALLSIGN = ?",
-            (callsign,)
+            "SELECT ID, MIN, MRN, TYPE, MESSAGE FROM messages_received WHERE FLIGHT_ID = ?",
+            (flight_id,)
         )
         recv_msgs = [dict(row) for row in cursor.fetchall()]
 
@@ -117,10 +117,10 @@ def get_messages_by_callsign(callsign):
         if conn:
             conn.close()
 
-def get_stand_assignment_details(min_id):
+def get_stand_assignment_by_flight_id(flight_id):
     """
-    Retrieves stand assignment details based on the MIN (message sent) ID.
-    Uses an explicit JOIN.
+    Retrieves stand assignment details based on the FLIGHT_ID.
+    Uses an explicit JOIN to include the associated message details.
     """
     try:
         conn = connect_db()
@@ -129,13 +129,13 @@ def get_stand_assignment_details(min_id):
         cursor.execute(
             """
             SELECT
-                s.MIN, s.FLIGHT_ID, s.CALLSIGN, s.MESSAGE,
+                s.MIN, s.FLIGHT_ID, s.CALLSIGN, s.MESSAGE AS SENT_MESSAGE,
                 a.STAND, a.AIRPORT
-            FROM messages_sent s
-            JOIN stand_assignments a ON s.MIN = a.MIN
-            WHERE s.MIN = ?
+            FROM stand_assignments a
+            JOIN messages_sent s ON a.MIN = s.MIN
+            WHERE a.FLIGHT_ID = ?
             """,
-            (min_id,)
+            (flight_id,)
         )
         row = cursor.fetchone()
         return dict(row) if row else None
@@ -146,6 +146,100 @@ def get_stand_assignment_details(min_id):
         if conn:
             conn.close()
 
+def get_last_received_min(flight_id):
+    """
+    Retrieves the MIN (Message Identification Number) of the most recent 
+    message received for a specific flight_id. Returns 0 if no messages are found.
+    """
+    try:
+        conn = connect_db()
+        cursor = conn.cursor()
+
+        # Use the MAX aggregate function to find the highest MIN value
+        cursor.execute(
+            """
+            SELECT
+                MAX(MIN)
+            FROM messages_received
+            WHERE FLIGHT_ID = ?
+            """,
+            (flight_id,)
+        )
+        
+        # fetchone() will return a tuple (min_value,) or (None,) if no rows matched the WHERE clause
+        result = cursor.fetchone()[0]
+
+        # If MAX returns None (meaning no rows were found), we return 0 as requested.
+        return result if result is not None else 0
+
+    except sqlite3.Error as e:
+        print(f"Database Error: {e}")
+        return 0
+    finally:
+        if conn:
+            conn.close()
+
+def get_last_received_message(flight_id):
+    """
+    Retrieves the most recent message received for a specific flight_id.
+    This is determined by the highest MIN (Message Identification Number).
+    """
+    try:
+        conn = connect_db()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT
+                ID, MIN, CALLSIGN, TYPE, MRN, MESSAGE
+            FROM messages_received
+            WHERE FLIGHT_ID = ?
+            ORDER BY MIN DESC
+            LIMIT 1
+            """,
+            (flight_id,)
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else {"min": 0}
+    except sqlite3.Error as e:
+        print(f"Database Error: {e}")
+        # return None
+        return {"error": e}
+    finally:
+        if conn:
+            conn.close()
+
+# --- U: UPDATE Operations ---
+
+def update_stand_assignment_stand(flight_id, new_stand):
+    """
+    Updates the STAND assigned to a specific flight_id in the stand_assignments table.
+    """
+    try:
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE stand_assignments
+            SET STAND = ?
+            WHERE FLIGHT_ID = ?
+            """,
+            (new_stand, flight_id)
+        )
+        rows_affected = cursor.rowcount
+        conn.commit()
+
+        if rows_affected > 0:
+            return f"Successfully updated stand for FLIGHT_ID {flight_id} to {new_stand}."
+        else:
+            return f"No stand assignment found or updated for FLIGHT_ID {flight_id}."
+
+    except sqlite3.Error as e:
+        return f"Database Error: {e}"
+    finally:
+        if conn:
+            conn.close()
+    
 # --- D: DELETE Operations ---
 
 def delete_stand_assignment(flight_id):
