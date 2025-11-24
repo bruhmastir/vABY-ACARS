@@ -36,3 +36,9 @@ def respond_to_cpdlc_response(msg_data: dict, callsign: str):
     min_id = msg_data["min"]
     code = msg_data["code"]
     msg = msg_data["message"]
+
+def change_min(old_msg, min_id):
+    data = parse_cpdlc_packet(old_msg)
+    new_msg = f"/data2/{min_id}/{data["mrn"]}/{data["code"]}/{data["message"]}"
+
+    return new_msg

@@ -1,10 +1,10 @@
 from vamsys.flights import get_flight_from_callsign
 from .hoppie import send_message
-from utils.serial import next_serial
+from database.db_commit import next_serial
 from utils.stands import find_company_stands
 
 def send_arrival_info(callsign, arrival_airport, eta):
-    message_id = next_serial()
+    message_id, r = next_serial()
     stand = find_company_stands(arrival_airport)
 
     msg = (
@@ -15,7 +15,7 @@ def send_arrival_info(callsign, arrival_airport, eta):
     )
 
     flight_id = get_flight_from_callsign(callsign)["flight_id"]
-    print(send_message(callsign, "cpdlc", msg, flight_id))
+    print(send_message(callsign, "cpdlc", msg, flight_id, included_min=message_id))
 
     
     return msg

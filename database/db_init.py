@@ -1,6 +1,7 @@
 import sqlite3
+from config import DB_NAME
 
-def db_init(db_name='atc_data.db'):
+def db_init(db_name=DB_NAME):
     """
     Initializes the SQLite database and creates the necessary tables.
     """
@@ -46,3 +47,5 @@ def db_init(db_name='atc_data.db'):
     conn.commit()
     conn.close()
     print(f"Database '{db_name}' initialized with all tables.")
+
+db_init()

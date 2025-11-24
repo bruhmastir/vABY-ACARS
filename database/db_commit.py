@@ -1,7 +1,5 @@
 import sqlite3
-
-# Define the default database file name
-DB_NAME = 'atc_data.db'
+from config import DB_NAME
 
 def connect_db(db_name=DB_NAME):
     """Establishes and returns a connection to the SQLite database."""
@@ -25,11 +23,12 @@ def insert_message_sent(flight_id, callsign, msg_type, message):
             (flight_id, callsign, msg_type, message)
         )
         conn.commit()
-        return f"Successfully inserted the message into messages_sent."
+        min_id = cursor.lastrowid
+        return True, min_id, f"Successfully inserted the message into messages_sent."
     except sqlite3.IntegrityError as e:
-        return f"Error inserting message sent (Integrity Error): {e}"
+        return False, None, f"Error inserting message sent (Integrity Error): {e}"
     except sqlite3.Error as e:
-        return f"Database Error: {e}"
+        return False, None, f"Database Error: {e}"
     finally:
         if conn:
             conn.close()
@@ -205,6 +204,22 @@ def get_last_received_message(flight_id):
         print(f"Database Error: {e}")
         # return None
         return {"error": e}
+    finally:
+        if conn:
+            conn.close()
+
+def next_serial():
+    min_id = 0
+    try:
+        conn = connect_db()
+        cursor = conn.cursor()
+        r = cursor.lastrowid
+        min_id = r if r else 0
+        return min_id, f"Serial number MIN generated successfully"
+    except sqlite3.IntegrityError as e:
+        return min_id, f"Error inserting message sent (Integrity Error): {e}"
+    except sqlite3.Error as e:
+        return min_id, f"Database Error: {e}"
     finally:
         if conn:
             conn.close()
