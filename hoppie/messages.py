@@ -1,6 +1,6 @@
 from vamsys.flights import get_flight_from_callsign
 from .hoppie import send_message
-from database.db_commit import next_serial
+from database.db_operations import next_serial
 from utils.stands import find_company_stands
 
 def send_arrival_info(callsign, arrival_airport, eta):

@@ -3,7 +3,7 @@ from hoppie.hoppie import poll_messages, send_message
 from utils.logging import log
 from tasks.cpdlc import parse_cpdlc_packet, respond_to_cpdlc_response
 from tasks.telex import respond_to_telex
-from database.db_commit import get_last_received_min, insert_message_received
+from database.db_operations import get_last_received_min, insert_message_received
 from vamsys.flights import get_flight_from_callsign
 
 # Matches structures like:

@@ -1,7 +1,7 @@
 import requests
 from requests.exceptions import RequestException
 from config import LOGON_CODE, CALLSIGN, HTTP_TIMEOUT
-from database.db_commit import insert_message_sent
+from database.db_operations import insert_message_sent
 from tasks.cpdlc import change_min
 
 BASE_URL = "http://www.hoppie.nl/acars/system"

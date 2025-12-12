@@ -84,8 +84,49 @@ def assign_stand(flight_id, callsign, airport, stand, min_id):
 
 # --- R: READ (SELECT) Operations ---
 
-def get_messages_by_flight(flight_id):
-    """Retrieves all sent and received messages for a specific flight."""
+def get_sent_message_by_min(min_id: int):
+    """
+    Retrieves a single sent message from the messages_sent table using its MIN ID.
+
+    :param min_id: The unique MIN (Message Identification Number) of the sent message.
+    :returns: A dictionary containing the message data, or None if not found/error.
+    """
+    conn = None
+    try:
+        conn = connect_db()
+        conn.row_factory = sqlite3.Row  # Allows accessing columns by name
+        cursor = conn.cursor()
+
+        # Query the messages_sent table using the MIN as the primary filter
+        cursor.execute(
+            """
+            SELECT MIN, FLIGHT_ID, CALLSIGN, TYPE, MESSAGE 
+            FROM messages_sent 
+            WHERE MIN = ?
+            """,
+            (min_id,)
+        )
+        
+        row = cursor.fetchone()
+        
+        if row:
+            # Convert the single Row object to a dictionary
+            return dict(row)
+        else:
+            # Return None if no message was found with that MIN
+            return {"None": None}
+
+    except sqlite3.Error as e:
+        print(f"Database Error retrieving sent message by MIN {min_id}: {e}")
+        return {"None": None}
+        
+    finally:
+        if conn:
+            conn.close()
+
+def get_messages_to_flight(flight_id):
+    """Retrieves all messages SENT TO a specific flight."""
+    conn = None
     try:
         conn = connect_db()
         conn.row_factory = sqlite3.Row  # Allows accessing columns by name
@@ -93,28 +134,56 @@ def get_messages_by_flight(flight_id):
 
         # Get sent messages
         cursor.execute(
-            "SELECT MIN, FLIGHT_ID, TYPE, MESSAGE FROM messages_sent WHERE FLIGHT_ID = ?",
+            """
+            SELECT MIN, FLIGHT_ID, CALLSIGN, TYPE, MESSAGE 
+            FROM messages_sent 
+            WHERE FLIGHT_ID = ?
+            """,
             (flight_id,)
         )
-        sent_msgs = [dict(row) for row in cursor.fetchall()]
+        # Convert list of Row objects to list of dictionaries
+        sent_msgs = [dict(row) for row in cursor.fetchall()] 
+        
+        return sent_msgs
 
-        # Get received messages
-        cursor.execute(
-            "SELECT ID, MIN, MRN, TYPE, MESSAGE FROM messages_received WHERE FLIGHT_ID = ?",
-            (flight_id,)
-        )
-        recv_msgs = [dict(row) for row in cursor.fetchall()]
-
-        return {
-            'sent': sent_msgs,
-            'received': recv_msgs
-        }
     except sqlite3.Error as e:
-        print(f"Database Error: {e}")
-        return {'sent': [], 'received': []}
+        print(f"Database Error retrieving sent messages: {e}")
+        return []
+        
     finally:
         if conn:
             conn.close()
+
+def get_messages_from_flight(flight_id):
+    """Retrieves all messages SENT FROM (BY) a specific flight."""
+    conn = None
+    try:
+        conn = connect_db()
+        conn.row_factory = sqlite3.Row  # Allows accessing columns by name
+        cursor = conn.cursor()
+
+        # Get received messages
+        cursor.execute(
+            """
+            SELECT ID, MIN, FLIGHT_ID, CALLSIGN, TYPE, MRN, MESSAGE
+            FROM messages_received 
+            WHERE FLIGHT_ID = ?
+            """,
+            (flight_id,)
+        )
+        # Convert list of Row objects to list of dictionaries
+        recv_msgs = [dict(row) for row in cursor.fetchall()]
+        
+        return recv_msgs
+
+    except sqlite3.Error as e:
+        print(f"Database Error retrieving received messages: {e}")
+        return []
+        
+    finally:
+        if conn:
+            conn.close()
+
 
 def get_stand_assignment_by_flight_id(flight_id):
     """

@@ -11,6 +11,8 @@ test.py
 serial.txt
 # Ignores the config file
 config.py
+# Ignores the ideas file where I log in the features I want to implement and how things should work in theory
+ideas.txt
 
 # Virtual Environments
 # Ignores all .venv folders (for virtual environments like venv)

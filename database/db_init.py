@@ -48,4 +48,4 @@ def db_init(db_name=DB_NAME):
     conn.close()
     print(f"Database '{db_name}' initialized with all tables.")
 
-db_init()
+# db_init()
